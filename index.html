@@ -579,7 +579,7 @@
                 const apiUrl = `https://restapifrontoffice.reservauto.net/api/v2/Billing/TripCostEstimate?CityId=103&StartDate=${encodeURIComponent(startDateStr)}&EndDate=${encodeURIComponent(endDateStr)}&Distance=${distance}&AcceptLanguage=en`;
 
                 // Use CORS proxy to bypass CORS restrictions
-                const proxyUrl = `https://vercel-cors-proxy-server.vercel.app/api/proxy?url=${encodeURIComponent(apiUrl)}`;
+                const proxyUrl = `https://cors-proxy-xi-ten.vercel.app/api/proxy?url=${encodeURIComponent(apiUrl)}`;
 
                 // Call API through proxy
                 const response = await fetch(proxyUrl, {
@@ -750,7 +750,7 @@
                     
                     // Build API URL
                     const apiUrl = `https://restapifrontoffice.reservauto.net/api/v2/Billing/TripCostEstimate?CityId=103&StartDate=${encodeURIComponent(startDateStr)}&EndDate=${encodeURIComponent(endDateStr)}&Distance=${distance}&AcceptLanguage=en`;
-                    const proxyUrl = `https://vercel-cors-proxy-server.vercel.app/api/proxy?url=${encodeURIComponent(apiUrl)}`;
+                    const proxyUrl = `https://cors-proxy-xi-ten.vercel.app/api/proxy?url=${encodeURIComponent(apiUrl)}`;
                     
                     // Call API
                     const response = await fetch(proxyUrl, {
