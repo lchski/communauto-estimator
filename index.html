@@ -1,0 +1,849 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Communauto Trip Cost Estimator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .container {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 800px;
+            width: 100%;
+            padding: 25px;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 24px;
+            text-align: center;
+        }
+
+        .input-section {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 18px;
+            margin-bottom: 20px;
+        }
+
+        .input-group {
+            margin-bottom: 15px;
+        }
+
+        .input-group:last-child {
+            margin-bottom: 0;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            color: #555;
+            font-weight: 600;
+            font-size: 13px;
+        }
+
+        input[type="date"],
+        input[type="time"],
+        input[type="number"],
+        select {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            font-size: 15px;
+            transition: border-color 0.3s;
+            background: white;
+        }
+
+        input[type="date"]:focus,
+        input[type="time"]:focus,
+        input[type="number"]:focus,
+        select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .datetime-inputs {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .duration-inputs {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            margin-top: 15px;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .results {
+            display: none;
+            margin-top: 20px;
+        }
+
+        .results.show {
+            display: block;
+        }
+
+        .sensitivity-section {
+            margin-top: 20px;
+            display: none;
+        }
+
+        .sensitivity-section.show {
+            display: block;
+        }
+
+        .sensitivity-button {
+            width: 100%;
+            padding: 10px;
+            background: white;
+            color: #667eea;
+            border: 2px solid #667eea;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-bottom: 15px;
+        }
+
+        .sensitivity-button:hover {
+            background: #f8f9ff;
+        }
+
+        .sensitivity-button.active {
+            background: #667eea;
+            color: white;
+        }
+
+        .sensitivity-results {
+            display: none;
+        }
+
+        .sensitivity-results.show {
+            display: block;
+        }
+
+        .sensitivity-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            overflow: hidden;
+            table-layout: fixed;
+        }
+
+        .sensitivity-table th:first-child,
+        .sensitivity-table td:first-child {
+            width: auto;
+        }
+
+        .sensitivity-table th:nth-child(2),
+        .sensitivity-table td:nth-child(2),
+        .sensitivity-table th:nth-child(3),
+        .sensitivity-table td:nth-child(3) {
+            width: 40%;
+        }
+
+        .sensitivity-table th {
+            background: #f8f9fa;
+            padding: 10px 12px;
+            text-align: left;
+            font-weight: 700;
+            font-size: 13px;
+            color: #333;
+            border-bottom: 2px solid #e0e0e0;
+        }
+
+        .sensitivity-table td {
+            padding: 10px 12px;
+            border-bottom: 1px solid #f0f0f0;
+            font-size: 14px;
+        }
+
+        .sensitivity-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .sensitivity-table td:first-child {
+            color: #666;
+            font-weight: 500;
+        }
+
+        .sensitivity-table td:not(:first-child) {
+            color: #333;
+            font-weight: 600;
+            text-align: right;
+        }
+
+        .sensitivity-table td.cheaper-cell {
+            background: #d1fae5;
+            color: #059669;
+        }
+
+        .sensitivity-diff {
+            display: block;
+            font-size: 11px;
+            font-weight: 400;
+            margin-top: 3px;
+            opacity: 0.8;
+        }
+
+        .sensitivity-diff.minor {
+            color: #eab308;
+        }
+
+        .sensitivity-diff.moderate {
+            color: #f97316;
+        }
+
+        .sensitivity-diff.significant {
+            color: #ef4444;
+        }
+
+        .results-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            overflow: hidden;
+            table-layout: fixed;
+        }
+
+        .results-table th:first-child,
+        .results-table td:first-child {
+            width: auto;
+        }
+
+        .results-table th:nth-child(2),
+        .results-table td:nth-child(2),
+        .results-table th:nth-child(3),
+        .results-table td:nth-child(3) {
+            width: 40%;
+        }
+
+        .results-table th {
+            background: #f8f9fa;
+            padding: 12px 15px;
+            text-align: left;
+            font-weight: 700;
+            font-size: 14px;
+            color: #333;
+            border-bottom: 2px solid #e0e0e0;
+        }
+
+        .results-table th:first-child {
+            color: #666;
+        }
+
+        .results-table th.cheaper {
+            background: #10b981;
+            color: white;
+            position: relative;
+        }
+
+        .results-table th.cheaper .rate-subtitle {
+            color: rgba(255, 255, 255, 0.9);
+        }
+
+        .results-table td {
+            padding: 10px 15px;
+            border-bottom: 1px solid #f0f0f0;
+            font-size: 14px;
+        }
+
+        .results-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .results-table td:first-child {
+            color: #666;
+            font-weight: 500;
+        }
+
+        .results-table td:not(:first-child) {
+            color: #333;
+            font-weight: 600;
+            text-align: right;
+        }
+
+        .results-table tr.total-row td {
+            border-top: 2px solid #667eea;
+            padding-top: 12px;
+            font-size: 15px;
+        }
+
+        .results-table tr.total-row td:first-child {
+            color: #667eea;
+            font-weight: 600;
+        }
+
+        .results-table tr.total-row td:not(:first-child) {
+            color: #667eea;
+            font-weight: 700;
+        }
+
+        .results-table tr.difference-row td {
+            padding-top: 12px;
+            font-size: 13px;
+        }
+
+        .results-table tr.difference-row td:first-child {
+            color: #666;
+        }
+
+        .results-table tr.difference-row td:not(:first-child) {
+            font-weight: 500;
+        }
+
+        .results-table tr.difference-row.minor td:not(:first-child) {
+            color: #eab308;
+        }
+
+        .results-table tr.difference-row.moderate td:not(:first-child) {
+            color: #f97316;
+        }
+
+        .results-table tr.difference-row.significant td:not(:first-child) {
+            color: #ef4444;
+        }
+
+        .results-table .rate-subtitle {
+            font-size: 11px;
+            color: #888;
+            font-style: italic;
+            font-weight: 400;
+            display: block;
+            margin-top: 2px;
+        }
+
+        .loading {
+            text-align: center;
+            color: #667eea;
+            font-weight: 600;
+            padding: 15px;
+            display: none;
+            font-size: 14px;
+        }
+
+        .loading.show {
+            display: block;
+        }
+
+        .error {
+            background: #fee;
+            border: 2px solid #fcc;
+            border-radius: 6px;
+            padding: 12px;
+            color: #c33;
+            margin-top: 15px;
+            display: none;
+            font-size: 14px;
+        }
+
+        .error.show {
+            display: block;
+        }
+
+        @media (max-width: 600px) {
+            body {
+                padding: 10px;
+            }
+
+            .container {
+                padding: 20px;
+            }
+
+            h1 {
+                font-size: 20px;
+                margin-bottom: 15px;
+            }
+
+            .input-section {
+                padding: 15px;
+            }
+
+            .results-table th,
+            .results-table td {
+                padding: 8px 10px;
+                font-size: 13px;
+            }
+
+            .results-table .rate-subtitle {
+                font-size: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Communauto Trip Cost Estimator</h1>
+        
+        <div class="input-section">
+            <div class="input-group">
+                <div class="datetime-inputs">
+                    <div>
+                        <label for="tripDate">Date</label>
+                        <input type="date" id="tripDate" required>
+                    </div>
+                    <div>
+                        <label for="tripTime">Start Time</label>
+                        <input type="time" id="tripTime" required>
+                    </div>
+                </div>
+            </div>
+
+            <div class="input-group">
+                <div class="duration-inputs">
+                    <div>
+                        <label for="hours">Hours</label>
+                        <input type="number" id="hours" min="0" step="0.25" value="1" required>
+                    </div>
+                    <div>
+                        <label for="minutes">Minutes</label>
+                        <input type="number" id="minutes" min="0" max="59" step="1" value="0">
+                    </div>
+                </div>
+            </div>
+
+            <div class="input-group">
+                <label for="distance">Distance (km)</label>
+                <input type="number" id="distance" min="0" step="1" value="10" required>
+            </div>
+
+            <div class="input-group">
+                <label for="planType">Plan Type</label>
+                <select id="planType">
+                    <option value="Open">Open</option>
+                    <option value="Open Plus">Open Plus</option>
+                    <option value="Value" selected>Value</option>
+                    <option value="Value Plus">Value Plus</option>
+                    <option value="Value Extra">Value Extra</option>
+                </select>
+            </div>
+
+            <button onclick="calculateCost()">Calculate Cost</button>
+        </div>
+
+        <div class="loading" id="loading">Calculating costs...</div>
+        <div class="error" id="error"></div>
+        <div class="results" id="results"></div>
+        
+        <div class="sensitivity-section" id="sensitivitySection">
+            <button class="sensitivity-button" id="sensitivityButton" onclick="toggleSensitivity()">
+                Compare Different Durations
+            </button>
+            <div class="sensitivity-results" id="sensitivityResults"></div>
+        </div>
+    </div>
+
+    <script>
+        // Set default date to today
+        const now = new Date();
+        const dateInput = document.getElementById('tripDate');
+        const timeInput = document.getElementById('tripTime');
+        
+        // Set today's date
+        const year = now.getFullYear();
+        const month = String(now.getMonth() + 1).padStart(2, '0');
+        const day = String(now.getDate()).padStart(2, '0');
+        dateInput.value = `${year}-${month}-${day}`;
+        
+        // Round to next 15-minute increment
+        const minutes = now.getMinutes();
+        const roundedMinutes = Math.ceil(minutes / 15) * 15;
+        const roundedTime = new Date(now);
+        roundedTime.setMinutes(roundedMinutes);
+        roundedTime.setSeconds(0);
+        roundedTime.setMilliseconds(0);
+        
+        const hours = String(roundedTime.getHours()).padStart(2, '0');
+        const mins = String(roundedTime.getMinutes()).padStart(2, '0');
+        timeInput.value = `${hours}:${mins}`;
+
+        // Load saved plan preference from localStorage
+        const savedPlan = localStorage.getItem('communauto-plan-type');
+        if (savedPlan) {
+            document.getElementById('planType').value = savedPlan;
+        }
+
+        // Save plan preference when changed
+        document.getElementById('planType').addEventListener('change', function() {
+            localStorage.setItem('communauto-plan-type', this.value);
+        });
+
+        // Global variable to store current calculation parameters
+        let currentParams = null;
+
+        async function calculateCost() {
+            const loadingEl = document.getElementById('loading');
+            const errorEl = document.getElementById('error');
+            const resultsEl = document.getElementById('results');
+            
+            // Hide previous results/errors
+            resultsEl.classList.remove('show');
+            errorEl.classList.remove('show');
+            loadingEl.classList.add('show');
+
+            try {
+                // Get input values
+                const date = document.getElementById('tripDate').value;
+                const time = document.getElementById('tripTime').value;
+                const hours = parseFloat(document.getElementById('hours').value) || 0;
+                const minutes = parseFloat(document.getElementById('minutes').value) || 0;
+                const distance = parseFloat(document.getElementById('distance').value) || 0;
+                const planType = document.getElementById('planType').value;
+
+                // Store current parameters for sensitivity analysis
+                currentParams = { date, time, hours, minutes, distance, planType };
+
+                // Calculate total duration in hours
+                const totalHours = hours + (minutes / 60);
+
+                // Create start datetime
+                const startDate = new Date(`${date}T${time}`);
+                
+                // Create end datetime by adding duration
+                const endDate = new Date(startDate.getTime() + totalHours * 60 * 60 * 1000);
+
+                // Format dates for API (ISO 8601 with timezone offset)
+                const formatDateForAPI = (date) => {
+                    const offset = -date.getTimezoneOffset();
+                    const offsetHours = String(Math.floor(Math.abs(offset) / 60)).padStart(2, '0');
+                    const offsetMins = String(Math.abs(offset) % 60).padStart(2, '0');
+                    const offsetSign = offset >= 0 ? '+' : '-';
+                    
+                    const year = date.getFullYear();
+                    const month = String(date.getMonth() + 1).padStart(2, '0');
+                    const day = String(date.getDate()).padStart(2, '0');
+                    const hour = String(date.getHours()).padStart(2, '0');
+                    const minute = String(date.getMinutes()).padStart(2, '0');
+                    const second = String(date.getSeconds()).padStart(2, '0');
+                    
+                    return `${year}-${month}-${day}T${hour}:${minute}:${second}${offsetSign}${offsetHours}:${offsetMins}`;
+                };
+
+                const startDateStr = formatDateForAPI(startDate);
+                const endDateStr = formatDateForAPI(endDate);
+
+                // Build API URL
+                const apiUrl = `https://restapifrontoffice.reservauto.net/api/v2/Billing/TripCostEstimate?CityId=103&StartDate=${encodeURIComponent(startDateStr)}&EndDate=${encodeURIComponent(endDateStr)}&Distance=${distance}&AcceptLanguage=en`;
+
+                // Use CORS proxy to bypass CORS restrictions
+                const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(apiUrl)}`;
+
+                // Call API through proxy
+                const response = await fetch(proxyUrl, {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json, text/javascript, */*; q=0.01',
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error(`API request failed: ${response.status}`);
+                }
+
+                const data = await response.json();
+
+                // Filter for selected plan type
+                const selectedPlans = data.tripPackageCostEstimateList.filter(
+                    plan => plan.localizedPlanTypeName === planType
+                );
+
+                if (selectedPlans.length === 0) {
+                    throw new Error(`No ${planType} plans found in response`);
+                }
+
+                // Display results
+                displayResults(selectedPlans, data.currency);
+
+                // Show sensitivity analysis section
+                document.getElementById('sensitivitySection').classList.add('show');
+                document.getElementById('sensitivityResults').classList.remove('show');
+                document.getElementById('sensitivityButton').style.display = 'block';
+
+            } catch (error) {
+                console.error('Error:', error);
+                errorEl.textContent = `Error: ${error.message}`;
+                errorEl.classList.add('show');
+            } finally {
+                loadingEl.classList.remove('show');
+            }
+        }
+
+        function displayResults(plans, currency) {
+            const resultsEl = document.getElementById('results');
+            
+            // Separate round-trip and FLEX plans
+            const roundTrip = plans.find(p => p.serviceType === 'StationBased');
+            const flex = plans.find(p => p.serviceType === 'FreeFloating');
+            
+            if (!roundTrip || !flex) {
+                throw new Error('Missing expected plan types');
+            }
+            
+            // Find cheaper plan
+            const minCost = Math.min(roundTrip.totalCost, flex.totalCost);
+            const maxCost = Math.max(roundTrip.totalCost, flex.totalCost);
+            const difference = maxCost - minCost;
+            const percentDiff = ((difference / maxCost) * 100).toFixed(1);
+            
+            // Determine significance level for color coding
+            let significanceClass = 'minor';
+            if (difference > 5) {
+                significanceClass = 'significant';
+            } else if (difference > 2) {
+                significanceClass = 'moderate';
+            }
+            
+            const roundTripCheaper = roundTrip.totalCost === minCost;
+            const flexCheaper = flex.totalCost === minCost;
+            
+            // Show difference under the more expensive column
+            const roundTripDiff = roundTripCheaper ? '—' : `+$${difference.toFixed(2)} (${percentDiff}%)`;
+            const flexDiff = flexCheaper ? '—' : `+$${difference.toFixed(2)} (${percentDiff}%)`;
+            
+            let html = `
+                <table class="results-table">
+                    <thead>
+                        <tr>
+                            <th></th>
+                            <th class="${roundTripCheaper && difference > 0.01 ? 'cheaper' : ''}">
+                                Round-trip
+                                <span class="rate-subtitle">${roundTrip.localizedBillingRateName}</span>
+                            </th>
+                            <th class="${flexCheaper && difference > 0.01 ? 'cheaper' : ''}">
+                                FLEX
+                                <span class="rate-subtitle">${flex.localizedBillingRateName}</span>
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Duration</td>
+                            <td>$${roundTrip.durationCost.toFixed(2)}</td>
+                            <td>$${flex.durationCost.toFixed(2)}</td>
+                        </tr>
+                        <tr>
+                            <td>Distance</td>
+                            <td>$${roundTrip.distanceCost.toFixed(2)}</td>
+                            <td>$${flex.distanceCost.toFixed(2)}</td>
+                        </tr>
+                        <tr class="total-row">
+                            <td>Total</td>
+                            <td>$${roundTrip.totalCost.toFixed(2)}</td>
+                            <td>$${flex.totalCost.toFixed(2)}</td>
+                        </tr>
+                        ${difference > 0.01 ? `
+                        <tr class="difference-row ${significanceClass}">
+                            <td>Difference</td>
+                            <td>${roundTripDiff}</td>
+                            <td>${flexDiff}</td>
+                        </tr>
+                        ` : ''}
+                    </tbody>
+                </table>
+            `;
+            
+            resultsEl.innerHTML = html;
+            resultsEl.classList.add('show');
+        }
+
+        async function toggleSensitivity() {
+            const button = document.getElementById('sensitivityButton');
+            
+            // Hide button and show results
+            button.style.display = 'none';
+            await runSensitivityAnalysis();
+        }
+
+        async function runSensitivityAnalysis() {
+            if (!currentParams) return;
+            
+            const resultsEl = document.getElementById('sensitivityResults');
+            const { date, time, hours, minutes, distance, planType } = currentParams;
+            const baseTotalHours = hours + (minutes / 60);
+            
+            // Calculate for +1h and +2h
+            const durations = [
+                { label: '+1h', hours: baseTotalHours + 1 },
+                { label: '+2h', hours: baseTotalHours + 2 }
+            ];
+            
+            let tableRows = '';
+            
+            for (const { label, hours: durationHours } of durations) {
+                try {
+                    // Create start and end dates
+                    const startDate = new Date(`${date}T${time}`);
+                    const endDate = new Date(startDate.getTime() + durationHours * 60 * 60 * 1000);
+                    
+                    // Format dates for API
+                    const formatDateForAPI = (date) => {
+                        const offset = -date.getTimezoneOffset();
+                        const offsetHours = String(Math.floor(Math.abs(offset) / 60)).padStart(2, '0');
+                        const offsetMins = String(Math.abs(offset) % 60).padStart(2, '0');
+                        const offsetSign = offset >= 0 ? '+' : '-';
+                        
+                        const year = date.getFullYear();
+                        const month = String(date.getMonth() + 1).padStart(2, '0');
+                        const day = String(date.getDate()).padStart(2, '0');
+                        const hour = String(date.getHours()).padStart(2, '0');
+                        const minute = String(date.getMinutes()).padStart(2, '0');
+                        const second = String(date.getSeconds()).padStart(2, '0');
+                        
+                        return `${year}-${month}-${day}T${hour}:${minute}:${second}${offsetSign}${offsetHours}:${offsetMins}`;
+                    };
+                    
+                    const startDateStr = formatDateForAPI(startDate);
+                    const endDateStr = formatDateForAPI(endDate);
+                    
+                    // Build API URL
+                    const apiUrl = `https://restapifrontoffice.reservauto.net/api/v2/Billing/TripCostEstimate?CityId=103&StartDate=${encodeURIComponent(startDateStr)}&EndDate=${encodeURIComponent(endDateStr)}&Distance=${distance}&AcceptLanguage=en`;
+                    const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(apiUrl)}`;
+                    
+                    // Call API
+                    const response = await fetch(proxyUrl, {
+                        method: 'GET',
+                        headers: {
+                            'Accept': 'application/json, text/javascript, */*; q=0.01',
+                        }
+                    });
+                    
+                    if (!response.ok) continue;
+                    
+                    const data = await response.json();
+                    const selectedPlans = data.tripPackageCostEstimateList.filter(
+                        plan => plan.localizedPlanTypeName === planType
+                    );
+                    
+                    if (selectedPlans.length === 0) continue;
+                    
+                    const roundTrip = selectedPlans.find(p => p.serviceType === 'StationBased');
+                    const flex = selectedPlans.find(p => p.serviceType === 'FreeFloating');
+                    
+                    if (!roundTrip || !flex) continue;
+                    
+                    const roundTripCheaper = roundTrip.totalCost < flex.totalCost;
+                    const flexCheaper = flex.totalCost < roundTrip.totalCost;
+                    
+                    // Calculate difference
+                    const difference = Math.abs(roundTrip.totalCost - flex.totalCost);
+                    const maxCost = Math.max(roundTrip.totalCost, flex.totalCost);
+                    const percentDiff = ((difference / maxCost) * 100).toFixed(1);
+                    
+                    // Determine significance class
+                    let significanceClass = 'minor';
+                    if (difference > 5) {
+                        significanceClass = 'significant';
+                    } else if (difference > 2) {
+                        significanceClass = 'moderate';
+                    }
+                    
+                    const diffText = difference > 0.01 
+                        ? `<span class="sensitivity-diff ${significanceClass}">+$${difference.toFixed(2)} (${percentDiff}%)</span>`
+                        : '';
+                    
+                    // Format total duration
+                    const totalHours = Math.floor(durationHours);
+                    const totalMinutes = Math.round((durationHours - totalHours) * 60);
+                    const durationDisplay = totalMinutes > 0 ? `${totalHours}h ${totalMinutes}m` : `${totalHours}h`;
+                    
+                    const roundTripDisplay = (roundTripCheaper || difference <= 0.01)
+                        ? `$${roundTrip.totalCost.toFixed(2)}`
+                        : `$${roundTrip.totalCost.toFixed(2)}<br>${diffText}`;
+                    
+                    const flexDisplay = (flexCheaper || difference <= 0.01)
+                        ? `$${flex.totalCost.toFixed(2)}`
+                        : `$${flex.totalCost.toFixed(2)}<br>${diffText}`;
+                    
+                    tableRows += `
+                        <tr>
+                            <td>${label} (${durationDisplay})</td>
+                            <td class="${roundTripCheaper && difference > 0.01 ? 'cheaper-cell' : ''}">${roundTripDisplay}</td>
+                            <td class="${flexCheaper && difference > 0.01 ? 'cheaper-cell' : ''}">${flexDisplay}</td>
+                        </tr>
+                    `;
+                } catch (error) {
+                    console.error(`Error calculating ${label}:`, error);
+                }
+            }
+            
+            const html = `
+                <table class="sensitivity-table">
+                    <thead>
+                        <tr>
+                            <th>Duration</th>
+                            <th>Round-trip</th>
+                            <th>FLEX</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${tableRows}
+                    </tbody>
+                </table>
+            `;
+            
+            resultsEl.innerHTML = html;
+            resultsEl.classList.add('show');
+        }
+
+        // Allow Enter key to submit
+        document.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                calculateCost();
+            }
+        });
+    </script>
+</body>
+</html>
